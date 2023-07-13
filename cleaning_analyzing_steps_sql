@@ -2,7 +2,7 @@
 
 In this SQL project, we will perform cleaning and analysis on a dataset of video games. Let's begin by importing our dataset into SQLite. Fortunately, we can add the first row as the column names. If that is not the case, we would use the following code:
 
-~~~sql
+```
 ALTER TABLE games
 RENAME COLUMN field1 TO id;
 RENAME COLUMN field2 TO title;
@@ -20,7 +20,7 @@ RENAME COLUMN field13 TO backlogs;
 RENAME COLUMN field14 TO wishlist;
 
 SELECT * FROM games;
-~~~
+```
 
 Now that our dataset is imported with the proper column names, let's proceed with data wrangling.
 
