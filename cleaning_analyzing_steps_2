@@ -1,0 +1,158 @@
+-- Add a Year Column
+
+ALTER TABLE games
+ADD COLUMN year INTEGER;
+
+UPDATE games SET year = SUBSTR(release_date, 9, 4);
+
+COMMIT;
+
+-- Categorize Games as Retro or New
+
+ALTER TABLE games
+ADD COLUMN game_type TEXT;
+
+UPDATE games
+SET game_type = CASE
+    WHEN year > 2000 THEN 'new'
+    ELSE 'retro'
+  END;
+
+COMMIT;
+
+-- Retrieve Top 10 Best-Selling Retro Games
+
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'retro'
+ORDER BY rating
+LIMIT 10;
+
+-- Remove NULL Values and Check for Duplicates
+
+SELECT title, COUNT(*) AS count
+FROM games
+GROUP BY title
+HAVING count > 1;
+
+DELETE FROM games
+WHERE id IN (
+    SELECT id
+    FROM games
+    GROUP BY title
+    HAVING COUNT(*) > 1
+);
+
+SELECT COUNT(id)
+FROM games;
+
+-- Retrieve Top 10 Best-Selling Retro Games (Updated)
+
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'retro' AND rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 10;
+
+-- Retrieve Top 100 Retro Games and New Games
+
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'retro' AND rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 100;
+
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'new' AND rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 100;
+
+-- Remove Rows with Invalid Years
+
+DELETE FROM games
+WHERE year NOT LIKE '19%' AND year NOT LIKE '20%';
+
+-- Retrieve Top 100 New Games (Updated)
+
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'new' AND rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 100;
+
+-- Analyze the Impact of Genres on Ratings
+
+SELECT DISTINCT genres
+FROM games;
+
+-- Clean Genre Titles
+
+SELECT DISTINCT SUBSTR(genres, 1, INSTR(genres, ',') - 1) AS genres_new
+FROM games
+WHERE genres IS NOT NULL AND genres LIKE '%';
+
+-- Drop Text Rows
+
+ALTER TABLE games
+DROP COLUMN genres;
+ALTER TABLE games
+DROP COLUMN reviews;
+ALTER TABLE games
+DROP COLUMN summary;
+ALTER TABLE games
+DROP COLUMN production_team;
+
+-- Analyze Game Ratings and Plays
+
+UPDATE games
+SET plays = plays * (
+    CASE
+        WHEN SUBSTR(plays, -1) = 'k' THEN CAST(SUBSTR(plays, 1, LENGTH(plays) - 1) AS REAL) * 1000
+        ELSE CAST(plays AS REAL)
+    END
+);
+
+SELECT title, plays, rating
+FROM games
+WHERE rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 50;
+
+SELECT title, plays, rating
+FROM games
+WHERE rating IS NOT NULL
+ORDER BY rating ASC
+LIMIT 50;
+
+-- Categorize Games by Score
+
+SELECT title, plays, game_type,
+    CASE
+        WHEN rating <= 1 THEN 'Bad'
+        WHEN rating <= 2 THEN 'Okay'
+        WHEN rating <= 3 THEN 'Good'
+        WHEN rating <= 4 THEN 'Great'
+        WHEN rating <= 5 THEN 'Amazing'
+    END AS score
+FROM games;
+
+-- Calculate Average Plays by Score Category
+
+SELECT score, COUNT(score) AS score_count, ROUND(AVG(plays)) AS average_plays
+FROM games
+WHERE score IS NOT NULL
+GROUP BY score
+ORDER BY score_count DESC;
+
+-- Remove Outlier and Analyze Score Categories
+
+SELECT score, COUNT(score) AS score_count, ROUND(AVG(plays)) AS average_plays
+FROM games
+WHERE score IS NOT NULL AND score <> 'Bad'
+GROUP BY score
+ORDER BY score_count DESC;
+
+-- Compare Ratings and Plays for Retro and New Games
+
+SELECT AVG(rating) AS average_rating, AVG
