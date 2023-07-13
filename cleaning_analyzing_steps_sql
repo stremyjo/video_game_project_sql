@@ -1,0 +1,304 @@
+## Cleaning and Analyzing Steps
+
+In this SQL project, we will perform cleaning and analysis on a dataset of video games. Let's begin by importing our dataset into SQLite. Fortunately, we can add the first row as the column names. If that is not the case, we would use the following code:
+
+```sql
+ALTER TABLE games
+RENAME COLUMN field1 TO id;
+RENAME COLUMN field2 TO title;
+RENAME COLUMN field3 TO release_date;
+RENAME COLUMN field4 TO production_team;
+RENAME COLUMN field5 TO rating;
+RENAME COLUMN field6 TO times_listed;
+RENAME COLUMN field7 TO number_of_reviews;
+RENAME COLUMN field8 TO genres;
+RENAME COLUMN field9 TO summary;
+RENAME COLUMN field10 TO reviews;
+RENAME COLUMN field11 TO plays;
+RENAME COLUMN field12 TO playing;
+RENAME COLUMN field13 TO backlogs;
+RENAME COLUMN field14 TO wishlist;
+
+SELECT * FROM games;
+```
+
+Now that our dataset is imported with the proper column names, let's proceed with data wrangling.
+
+### Add a Year Column
+
+To group games by release date, let's add a new column called "year" to the table.
+
+```sql
+ALTER TABLE games
+ADD COLUMN year INTEGER;
+
+UPDATE games SET year = SUBSTR(release_date, 9, 4);
+
+COMMIT;
+```
+
+### Categorize Games as Retro or New
+
+Let's categorize the games as retro or new based on their release year. Games released before the year 2000 will be classified as retro.
+
+```sql
+ALTER TABLE games
+ADD COLUMN game_type TEXT;
+
+UPDATE games
+SET game_type = CASE
+    WHEN year > 2000 THEN 'new'
+    ELSE 'retro'
+  END;
+
+COMMIT;
+```
+
+### Retrieve Top 10 Best-Selling Retro Games
+
+Let's retrieve the top 10 best-selling retro games by ordering the data by rating and selecting titles released before the year 2000.
+
+```sql
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'retro'
+ORDER BY rating
+LIMIT 10;
+```
+
+### Remove NULL Values and Check for Duplicates
+
+To clean the dataset, we will first check for duplicates and remove them.
+
+```sql
+SELECT title, COUNT(*) AS count
+FROM games
+GROUP BY title
+HAVING count > 1;
+
+DELETE FROM games
+WHERE id IN (
+    SELECT id
+    FROM games
+    GROUP BY title
+    HAVING COUNT(*) > 1
+);
+
+SELECT COUNT(id)
+FROM games;
+```
+
+### Retrieve Top 10 Best-Selling Retro Games (Updated)
+
+Let's retrieve the top 10 best-selling retro games again, this time after removing duplicates and NULL values.
+
+```sql
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'retro' AND rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 10;
+```
+
+### Retrieve Top 100 Retro Games and New Games
+
+Next, let's retrieve the top 100 retro games and new games separately.
+
+```sql
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'retro' AND rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 100;
+
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'new' AND rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 100;
+```
+
+### Remove Rows with Invalid Years
+
+We will remove rows without a valid year from the dataset.
+
+```sql
+DELETE FROM games
+WHERE year NOT LIKE '19%' AND year NOT LIKE '20%';
+```
+
+### Retrieve Top 100 New Games (Updated)
+
+Let's retrieve the top 100 new games again after removing rows with invalid years.
+
+```sql
+SELECT title, year, game_type, rating, plays
+FROM games
+WHERE game_type = 'new' AND rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 100;
+```
+
+### Analyze the Impact of Genres on Ratings
+
+Let's explore the impact of genres on ratings by examining the distinct genres in the dataset.
+
+```sql
+SELECT DISTINCT genres
+FROM games;
+```
+
+### Clean Genre Titles
+
+To make the genre titles more manageable, let's clean them by selecting only the main genre of each game.
+
+```sql
+SELECT DISTINCT SUBSTR(genres, 1, INSTR(genres, ',') - 1) AS genres_new
+FROM games
+WHERE genres IS NOT NULL AND genres LIKE '%';
+```
+
+### Drop Text Rows
+
+If our friend is not interested in genre information, let's drop the genre-related columns from the table.
+
+```sql
+ALTER TABLE games
+DROP COLUMN genres;
+ALTER TABLE games
+DROP COLUMN reviews;
+ALTER TABLE games
+DROP COLUMN summary;
+ALTER TABLE games
+DROP COLUMN production_team;
+```
+
+### Analyze Game Ratings and Plays
+
+Let's see if game ratings affect the number of plays. We will update the plays column to a REAL number first.
+
+```sql
+UPDATE games
+SET plays = plays * (
+    CASE
+        WHEN SUBSTR(plays, -1) = 'k' THEN CAST(SUBSTR(plays, 1, LENGTH(plays) - 1) AS REAL) * 1000
+        ELSE CAST(plays AS REAL)
+    END
+);
+
+SELECT title, plays, rating
+FROM games
+WHERE rating IS NOT NULL
+ORDER BY rating DESC
+LIMIT 50;
+
+SELECT title, plays, rating
+FROM games
+WHERE rating IS NOT NULL
+ORDER BY rating ASC
+LIMIT 50;
+```
+
+### Categorize Games by Score
+
+Let's categorize the games into score categories (Bad, Okay, Good, Great, Amazing) based on their ratings.
+
+```sql
+SELECT title, plays, game_type,
+    CASE
+        WHEN rating <= 1 THEN 'Bad'
+        WHEN rating <= 2 THEN 'Okay'
+        WHEN rating <= 3 THEN 'Good'
+        WHEN rating <= 4 THEN 'Great'
+        WHEN rating <= 5 THEN 'Amazing'
+    END AS score
+FROM games;
+```
+
+### Calculate Average Plays by Score Category
+
+Let's calculate the number of games, average plays, and average review count for each score category.
+
+```sql
+SELECT score, COUNT(score) AS score_count, ROUND(AVG(plays)) AS average_plays
+FROM games
+WHERE score IS NOT NULL
+GROUP BY score
+ORDER BY score_count DESC;
+```
+
+### Remove Outlier and Analyze Score Categories
+
+Let's remove the outlier (game rated as "Bad") and analyze the top three score categories.
+
+```sql
+SELECT score, COUNT(score) AS score_count, ROUND(AVG(plays)) AS average_plays
+FROM games
+WHERE score IS NOT NULL AND score <> 'Bad'
+GROUP BY score
+ORDER BY score_count DESC;
+```
+
+### Compare Ratings and Plays for Retro and New Games
+
+Let's compare the average ratings and number of plays for retro games and new games.
+
+```sql
+SELECT AVG(rating) AS average_rating, AVG(plays) AS average_plays, game_type
+FROM games
+GROUP BY game_type;
+```
+
+### Analyze Number of Reviews by Score Category
+
+Let's analyze the number of reviews for each score category.
+
+```sql
+UPDATE games
+SET number_of_reviews = number_of_reviews * (
+    CASE
+        WHEN SUBSTR(number_of_reviews, -1) = 'k' THEN CAST(SUBSTR(number
+
+_of_reviews, 1, LENGTH(number_of_reviews) - 1) AS REAL) * 1000
+        ELSE CAST(number_of_reviews AS REAL)
+    END
+);
+
+SELECT score, COUNT(score) AS score_count, ROUND(AVG(number_of_reviews)) AS average_review_count
+FROM games
+WHERE score IS NOT NULL
+GROUP BY score
+ORDER BY score_count DESC;
+```
+
+### Retrieve Top Played Games
+
+Let's retrieve the top played games and create a stripped-down copy of the dataset for our friend.
+
+```sql
+ALTER TABLE games
+DROP COLUMN playing;
+ALTER TABLE games
+DROP COLUMN backlogs;
+ALTER TABLE games
+DROP COLUMN wishlist;
+ALTER TABLE games
+DROP COLUMN times_listed;
+
+SELECT title, year, game_type, score
+FROM games;
+```
+
+### Create a View for Data Visualization
+
+To prepare for data visualization, let's create a view that stores data for our friend's project.
+
+```sql
+CREATE VIEW games_table_for_friend_project AS
+SELECT title, year, rating, game_type, score, plays
+FROM games
+WHERE rating IS NOT NULL
+ORDER BY rating DESC;
+```
+
+Now, we have cleaned and analyzed the dataset. We can save the final games table and proceed with data visualization using other tools.
