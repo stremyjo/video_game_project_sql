@@ -50,9 +50,9 @@ Click [here](https://drive.google.com/file/d/14Vcs8W2MBCqgsVxRvbziIp3Rim-YeOLb/v
 
 Detailed version: To see the step-by-step process, including photos, tables, and a detailed narrative, click [here](https://docs.google.com/document/d/1p17JUJIuFJ-aamFRv_R2tYA--98noD8Z/edit?usp=sharing). This document provides a comprehensive overview of the actions taken.
 
-Condensed version: To see the condensed step-by-step process without tables or screenshots, simply text, click [here](link_to_condensed_cleaning_steps). This version contains the essential steps in a textual format.
+Condensed version: To see the condensed step-by-step process without tables or screenshots, simply text, click [here]((https://drive.google.com/file/d/1_Gd63U8HMZ8rwQmBQcmEfJfWoavR4MZK/view?usp=share_link)). This version contains the essential steps in a textual format.
 
-Coding only text file: You can access the plain text coding file [here](link_to_plain_text_coding_file).
+Coding only text file: You can access the plain text coding file [here]((https://drive.google.com/file/d/1gqwUTsEvxDsCQUStmOkVpLImo7owV0uz/view?usp=share_link)).
 
 To see me clean the same dataset using Google Sheets, click [here](https://docs.google.com/spreadsheets/d/1Oim2MsrU-2N4rz6wBPPyx_d3ZKGbt6lQqWri0pWL7hA/edit?usp=sharing).
 
